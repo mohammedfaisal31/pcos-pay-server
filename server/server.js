@@ -713,7 +713,7 @@ app.post("/api/updateTransactionData",(req,res)=>{
     user_sex = '${req.body.user_sex}',
     user_state = '${req.body.user_state}',
     workshop_titles = '${req.body.workshop_titles}'
-  WHERE transaction_id = ${req.body.transaction_id};
+  WHERE transaction_id = '${req.body.transaction_id}';
 `;
 
     
@@ -724,9 +724,13 @@ app.post("/api/updateTransactionData",(req,res)=>{
 
     })
     .then((result)=>{
-      res.status(200).send(result)
+      	console.log(result)
+	res.status(200).send(result)
     })
-    .catch((err)=>res.status(500).send(err));
+    .catch((err)=>{
+	    console.log(err)
+	    res.status(500).send(err)
+    });
 
 
 })
