@@ -718,6 +718,7 @@ app.post("/api/updateTransactionData",(req,res)=>{
 
     
     con.query(sql,(err,result)=>{
+      console.log(sql);
       if(err) reject(err);
       resolve(result);
     })
