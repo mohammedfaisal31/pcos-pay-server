@@ -791,30 +791,17 @@ console.log(response);
 const gst = (response.amount * 0.18).toFixed(3);
      const total = (parseFloat(gst) + (response.amount)).toFixed(2);
      console.log(formatINR(gst));
-     try {
-      const browser =  puppeteer.launch();
-      const page =  browser.newPage();
-  
-      const templatePath = path.join(__dirname, 'invoice.ejs');
-      const readFileAsync = util.promisify(fs.readFile);
-      const ejsTemplate = readFileAsync(templatePath, 'utf-8');
-      const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
-  
-       page.setContent(htmlContent);
-       page.emulateMediaType('print');
-  
-      const pdfBuffer =  page.pdf({ format: 'A4', printBackground: true });
-  
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
-      res.send(pdfBuffer);
-  
-       browser.close();
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error generating PDF');
-    }
-    
+     const templatePath = path.join(__dirname, 'invoice.ejs');
+     generatePdfBuffer(templatePath, transaction_id)
+     .then((pdfBuffer) => {
+       res.setHeader('Content-Type', 'application/pdf');
+       res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
+       res.send(pdfBuffer);
+     })
+     .catch((error) => {
+       console.error(error);
+       res.status(500).send('Error generating PDF');
+     });
     
     
     
@@ -964,4 +951,27 @@ function formatINR(number) {
 function convertToIST(dateString) {
   const date = moment.utc(dateString).tz('Asia/Kolkata');
   return date.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+}
+
+function generatePdfBuffer(templatePath, transaction_id) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+
+      const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
+      const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id});
+
+      await page.setContent(htmlContent);
+      await page.emulateMediaType('print');
+
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+
+      await browser.close();
+
+      resolve(pdfBuffer);
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
