@@ -48,6 +48,8 @@ app.use(cors());
 
 app.use(express.static(__dirname, { dotfiles: 'allow' } ));
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
@@ -770,7 +772,7 @@ app.post('/detect-country', (req, res) => {
   const countryCode = getCountryCodeFromPhoneNumber(phoneNumber);
   res.send(`{"country_code":"${countryCode}"}`);
 });
-app.get('/receipt/:transaction_id', (req, res) => {
+app.get('/receipt/:transaction_id', async (req, res) => {
   const pdf = require('html-pdf');
   const transaction_id = req.params.transaction_id;
   return new Promise((resolve,reject)=>{
@@ -788,26 +790,28 @@ console.log(response);
 const gst = (response.amount * 0.18).toFixed(3);
      const total = (parseFloat(gst) + (response.amount)).toFixed(2);
      console.log(formatINR(gst));
-     console.log(__dirname);
-     ejs.renderFile(path.join(__dirname,'/invoice.ejs'), { transaction_id,total,gst }, (err, html) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred while generating the HTML');
-      } else {
-        pdf.create(html).toBuffer((err, buffer) => {
-          if (err) {
-            console.log(err);
-            res.status(500).send('An error occurred while converting to PDF');
-          } else {
-            res.set({
-              'Content-Type': 'application/pdf',
-              'Content-Disposition': 'attachment; filename=receipt.pdf',
-            });
-            res.send(buffer);
-          }
-        });
-      }
-    });
+     try {
+      const browser =  puppeteer.launch();
+      const page =  browser.newPage();
+  
+      const templatePath = path.join(__dirname, 'views', 'pdf.ejs');
+      const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
+      const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
+  
+       page.setContent(htmlContent);
+       page.emulateMediaType('print');
+  
+      const pdfBuffer =  page.pdf({ format: 'A4', printBackground: true });
+  
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
+      res.send(pdfBuffer);
+  
+       browser.close();
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Error generating PDF');
+    }
     
     
     
