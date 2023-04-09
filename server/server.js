@@ -788,7 +788,8 @@ console.log(response);
 const gst = (response.amount * 0.18).toFixed(3);
      const total = (parseFloat(gst) + (response.amount)).toFixed(2);
      console.log(formatINR(gst));
-     ejs.renderFile(path.join(__dirname,'invoice.ejs'), { transaction_id,total,gst }, (err, html) => {
+     console.log(__dirname);
+     ejs.renderFile(path.join(__dirname,'/invoice.ejs'), { transaction_id,total,gst }, (err, html) => {
       if (err) {
         console.log(err);
         res.status(500).send('An error occurred while generating the HTML');
