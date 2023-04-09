@@ -21,7 +21,7 @@ const path = require('path');
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/kisargo.ml/privkey.pem', 'utf8');
 const certificate = fs.readFileSync('/etc/letsencrypt/live/kisargo.ml/cert.pem', 'utf8');
 const ca = fs.readFileSync('/etc/letsencrypt/live/kisargo.ml/fullchain.pem', 'utf8');
-
+const PdfPrinter = require('pdfmake/src/printer');
 const credentials = {
 	key: privateKey,
 	cert: certificate,
@@ -772,6 +772,8 @@ app.post('/detect-country', (req, res) => {
   const countryCode = getCountryCodeFromPhoneNumber(phoneNumber);
   res.send(`{"country_code":"${countryCode}"}`);
 });
+
+
 app.get('/receipt/:transaction_id', async (req, res) => {
   const pdf = require('html-pdf');
   const transaction_id = req.params.transaction_id;
@@ -792,31 +794,24 @@ const gst = (response.amount * 0.18).toFixed(3);
      console.log(formatINR(gst));
      const templatePath = path.join(__dirname, 'invoice.ejs');
     const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
-    const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
+    const pdfContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
 
-    const pdfOptions = {
-      format: 'A4',
-      orientation: 'portrait',
-      type: 'pdf',
-      quality: '100',
-      border: {
-        top: '1in',
-        bottom: '1in',
-        left: '1in',
-        right: '1in',
+    const fonts = {
+      Roboto: {
+        normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
+        bold: 'node_modules/roboto-font/fonts/Roboto/roboto-bold-webfont.ttf',
+        italics: 'node_modules/roboto-font/fonts/Roboto/roboto-italic-webfont.ttf',
+        bolditalics: 'node_modules/roboto-font/fonts/Roboto/roboto-bolditalic-webfont.ttf',
       },
-   };
-
-  pdf.create(htmlContent, pdfOptions).toBuffer((error, buffer) => {
-    if (error) {
-      console.error(error);
-      res.status(500).send('Error generating PDF');
-    } else {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
-      res.send(buffer);
-    }
-  });
+    };
+  
+    const printer = new PdfPrinter(fonts);
+    const pdfDoc = printer.createPdfKitDocument(JSON.parse(pdfContent));
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
+    pdfDoc.pipe(res);
+    pdfDoc.end();
     
     
     
