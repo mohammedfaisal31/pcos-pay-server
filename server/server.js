@@ -771,6 +771,7 @@ app.post('/detect-country', (req, res) => {
   res.send(`{"country_code":"${countryCode}"}`);
 });
 app.get('/receipt/:transaction_id', (req, res) => {
+  const pdf = require('html-pdf');
   const transaction_id = req.params.transaction_id;
   return new Promise((resolve,reject)=>{
     let sql = `SELECT * FROM payments WHERE transaction_id='${transaction_id}'`;
