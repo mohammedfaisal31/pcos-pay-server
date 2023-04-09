@@ -794,7 +794,7 @@ const gst = (response.amount * 0.18).toFixed(3);
       const browser =  puppeteer.launch();
       const page =  browser.newPage();
   
-      const templatePath = path.join(__dirname, 'views', 'pdf.ejs');
+      const templatePath = path.join(__dirname, 'invoice.ejs');
       const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
       const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
   
