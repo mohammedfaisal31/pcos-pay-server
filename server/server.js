@@ -13,6 +13,7 @@ const moment = require('moment-timezone');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { promisify } = require('util');
+const util = require('util');
 const readFileAsync = promisify(fs.readFile);
 const ejs = require('ejs');
 const path = require('path');
@@ -795,7 +796,8 @@ const gst = (response.amount * 0.18).toFixed(3);
       const page =  browser.newPage();
   
       const templatePath = path.join(__dirname, 'invoice.ejs');
-      const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
+      const readFileAsync = util.promisify(fs.readFile);
+      const ejsTemplate = readFileAsync(templatePath, 'utf-8');
       const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
   
        page.setContent(htmlContent);
