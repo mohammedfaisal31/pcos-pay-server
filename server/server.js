@@ -773,42 +773,42 @@ app.post('/detect-country', (req, res) => {
   const countryCode = getCountryCodeFromPhoneNumber(phoneNumber);
   res.send(`{"country_code":"${countryCode}"}`);
 });
-app.get('/receipt/:transaction_id', async (req, res) => {
-  const pdf = require('html-pdf');
-  const transaction_id = req.params.transaction_id;
-  return new Promise((resolve,reject)=>{
-    let sql = `SELECT * FROM payments WHERE transaction_id='${transaction_id}'`;
-    console.log(sql)
+// app.get('/receipt/:transaction_id', async (req, res) => {
+//   const pdf = require('html-pdf');
+//   const transaction_id = req.params.transaction_id;
+//   return new Promise((resolve,reject)=>{
+//     let sql = `SELECT * FROM payments WHERE transaction_id='${transaction_id}'`;
+//     console.log(sql)
 
-    con.query(sql,(err,result)=>{
-      if(err) reject("BAD")
-      console.log(result)
-      resolve(result[0])
+//     con.query(sql,(err,result)=>{
+//       if(err) reject("BAD")
+//       console.log(result)
+//       resolve(result[0])
 
-    })
-  }).then((response)=>{
-console.log(response);	
-const gst = (response.amount * 0.18).toFixed(3);
-     const total = (parseFloat(gst) + (response.amount)).toFixed(2);
-     console.log(formatINR(gst));
-     const templatePath = path.join(__dirname, 'invoice.ejs');
-     generatePdfBuffer(templatePath, transaction_id)
-     .then((pdfBuffer) => {
-       res.setHeader('Content-Type', 'application/pdf');
-       res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
-       res.send(pdfBuffer);
-     })
-     .catch((error) => {
-       console.error(error);
-       res.status(500).send('Error generating PDF');
-     });
+//     })
+//   }).then((response)=>{
+// console.log(response);	
+// const gst = (response.amount * 0.18).toFixed(3);
+//      const total = (parseFloat(gst) + (response.amount)).toFixed(2);
+//      console.log(formatINR(gst));
+//      const templatePath = path.join(__dirname, 'invoice.ejs');
+//      generatePdfBuffer(templatePath, transaction_id)
+//      .then((pdfBuffer) => {
+//        res.setHeader('Content-Type', 'application/pdf');
+//        res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
+//        res.send(pdfBuffer);
+//      })
+//      .catch((error) => {
+//        console.error(error);
+//        res.status(500).send('Error generating PDF');
+//      });
     
     
     
-    })
+//     })
      
   
-});
+// });
 app.get('/send-invoice/:transaction_id', async (req, res, next) => {
   try {
   const  transaction_id = req.params.transaction_id;
