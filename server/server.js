@@ -775,7 +775,8 @@ app.post('/detect-country', (req, res) => {
 
 
 app.get('/receipt/:transaction_id', async (req, res) => {
-  const pdf = require('html-pdf');
+  const jsreport = require('jsreport-core')();
+  const chrome = require('jsreport-chrome-pdf');
   const transaction_id = req.params.transaction_id;
   return new Promise((resolve,reject)=>{
     let sql = `SELECT * FROM payments WHERE transaction_id='${transaction_id}'`;
@@ -794,26 +795,28 @@ const gst = (response.amount * 0.18).toFixed(3);
      console.log(formatINR(gst));
      const templatePath = path.join(__dirname, 'invoice.ejs');
     const ejsTemplate = fs.readFileSync(templatePath, 'utf-8');
-    const pdfContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
+    const htmlContent = ejs.render(ejsTemplate, { transaction_id: transaction_id });
 
-    const fonts = {
-      Roboto: {
-        normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
-        bold: 'node_modules/roboto-font/fonts/Roboto/roboto-bold-webfont.ttf',
-        italics: 'node_modules/roboto-font/fonts/Roboto/roboto-italic-webfont.ttf',
-        bolditalics: 'node_modules/roboto-font/fonts/Roboto/roboto-bolditalic-webfont.ttf',
-      },
-    };
-  
-    const printer = new PdfPrinter(fonts);
-    const pdfDoc = printer.createPdfKitDocument(JSON.parse(pdfContent));
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
-    
-    
+    jsreport
+    .init()
+    .then(() => {
+      return jsreport.render({
+        template: {
+          content: htmlContent,
+          engine: 'none',
+          recipe: 'chrome-pdf',
+        },
+      });
+    })
+    .then((report) => {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=my_pdf.pdf');
+      report.stream.pipe(res);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error generating PDF');
+    });
     
     })
      
