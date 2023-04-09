@@ -17,7 +17,6 @@ const util = require('util');
 const readFileAsync = promisify(fs.readFile);
 const ejs = require('ejs');
 const path = require('path');
-const puppeteer = require('puppeteer');
 // Certificate
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/kisargo.ml/privkey.pem', 'utf8');
 const certificate = fs.readFileSync('/etc/letsencrypt/live/kisargo.ml/cert.pem', 'utf8');
